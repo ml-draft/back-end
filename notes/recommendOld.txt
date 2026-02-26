@@ -1,0 +1,66 @@
+# from collections import Counter
+
+# def recommend(model, ally_picks, enemy_picks, banned, player_lanes=None, top_n=10):
+#     ally_heroes  = [p['hero'] for p in ally_picks]
+#     enemy_heroes = [p['hero'] for p in enemy_picks]
+
+#     state = encode_state(ally_heroes, enemy_heroes).to(device)
+#     model.eval()
+#     with torch.no_grad():
+#         q_values = model(state.unsqueeze(0)).squeeze(0)
+
+#     unavailable       = set(ally_heroes + enemy_heroes + banned)
+#     ally_role_set     = set(r for h in ally_heroes for r in hero_roles.get(h, []))
+#     ally_lane_set     = set(p['lane'] for p in ally_picks if p.get('lane'))
+#     ally_spec_set     = set(s for h in ally_heroes for s in hero_specs.get(h, []))
+
+#     DESIRED_SPECS  = {'Crowd Control', 'Initiator', 'Guard', 'Regen'}
+#     missing_specs  = DESIRED_SPECS - ally_spec_set
+
+#     spec_counts    = Counter(s for h in ally_heroes for s in hero_specs.get(h, []))
+#     stacked_specs  = {s for s, count in spec_counts.items() if count >= 2}
+
+#     all_scored = []
+#     for hero, idx in hero_to_id.items():
+#         if hero in unavailable:
+#             continue
+
+#         score      = q_values[idx].item()
+#         hero_spec  = set(hero_specs.get(hero, []))
+
+#         # Penalty — duplicate role
+#         for r in hero_roles.get(hero, []):
+#             if r in ally_role_set:
+#                 score -= 0.3
+
+#         # Penalty — lane already taken
+#         for l in hero_lanes.get(hero, []):
+#             if l in ally_lane_set:
+#                 score -= 0.3
+
+#         # Bonus — hero fills a missing desired specialty
+#         filled = hero_spec & missing_specs
+#         score += 0.15 * len(filled)
+
+#         # Penalty — hero stacks a specialty you already have too much of
+#         stacked = hero_spec & stacked_specs
+#         score -= 0.10 * len(stacked)
+
+#         all_scored.append((hero, score))
+
+#     # ... rest of function unchanged
+#     if player_lanes is None:
+#         all_scored.sort(key=lambda x: x[1], reverse=True)
+#         return {'All': [{'hero': h, 'score': round(s, 4),
+#                          'roles': hero_roles.get(h, []),
+#                          'lane':  hero_lanes.get(h, [])} for h, s in all_scored[:top_n]]}
+
+#     results = {}
+#     for lane in player_lanes:
+#         lane_scored = [(h, s) for h, s in all_scored if lane in hero_lanes.get(h, [])]
+#         lane_scored.sort(key=lambda x: x[1], reverse=True)
+#         results[lane] = [{'hero': h, 'score': round(s, 4),
+#                           'roles': hero_roles.get(h, []),
+#                           'specs': list(hero_specs.get(h, [])),
+#                           'lane':  hero_lanes.get(h, [])} for h, s in lane_scored[:top_n]]
+#     return results
